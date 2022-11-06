@@ -14,3 +14,4 @@ def testing_client(scope='module'):
         yield testing_client
 
     db.drop_all()
+    
