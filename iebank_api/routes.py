@@ -8,6 +8,11 @@ def hello_world():
     return 'Hello, World!'
 
 
+@app.route('/skull', methods=['GET'])
+def skull():
+    return 'Hi! This is the BACKEND SKULL! 💀'
+
+
 @app.route('/accounts', methods=['POST'])
 def create_account():
     name = request.json['name']
@@ -34,7 +39,6 @@ def get_account(id):
 def update_account(id):
     account = Account.query.get(id)
     account.name = request.json['name']
-    account.currency = request.json['currency']
     db.session.commit()
     return format_account(account)
 
