@@ -1,7 +1,6 @@
-
 <template>
   <div id="app">
-    <router-view />
+    <router-view/>
   </div>
 </template>
 
@@ -9,4 +8,5 @@
 #app {
   margin-top: 60px;
 }
+
 </style>
