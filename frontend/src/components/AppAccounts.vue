@@ -6,8 +6,8 @@
           <h1>Accounts</h1>
           <hr />
           <br />
-          <!-- Allert Message -->
-          <button type="button" class="btn btn-success btn-sm">
+          <b-alert v-if=showMessage variant="success" show>{{ message }}</b-alert>
+          <button type="button" class="btn btn-success btn-sm" v-b-modal.account-modal>
             Add Account
           </button>
           <br /><br />
@@ -36,10 +36,11 @@
                 </td>
                 <td>
                   <div class="btn-group" role="group">
-                    <button type="button" class="btn btn-info btn-sm">
+                    <button type="button" class="btn btn-info btn-sm" v-b-modal.edit-account-modal
+                      @click="updateAccount(account)">
                       Edit
                     </button>
-                    <button type="button" class="btn btn-danger btn-sm">
+                    <button type="button" class="btn btn-danger btn-sm" @click="deleteAccount(account)">
                       Delete
                     </button>
                   </div>
@@ -67,6 +68,19 @@
         </b-form>
       </b-modal>
       <!-- End of Modal for Create Account-->
+      <!-- Start of Modal for Edit Account-->
+      <b-modal ref="editAccountModal" id="edit-account-modal" title="Edit the account" hide-backdrop hide-footer>
+        <b-form @submit="onSubmitUpdate" class="w-100">
+          <b-form-group id="form-edit-name-group" label="Account Name:" label-for="form-edit-name-input">
+            <b-form-input id="form-edit-name-input" type="text" v-model="createAccountForm.name"
+              placeholder="Account Name" required>
+            </b-form-input>
+          </b-form-group>
+          <b-button type="submit" variant="outline-info">Submit</b-button>
+        </b-form>
+      </b-modal>
+      <!-- End of Modal for Edit Account-->
+
     </div>
   </div>
 </template>
@@ -82,6 +96,11 @@ export default {
         name: "",
         currency: "",
       },
+      editAccountForm: {
+        id: "",
+        name: "",
+      },
+      showMessage: false,
     };
   },
   methods: {
@@ -104,15 +123,71 @@ export default {
         .post(path, payload)
         .then((response) => {
           this.getAccounts();
+          // For message alert
+          this.message = "Account Created succesfully!";
+          // To actually show the message
+          this.showMessage = true;
+          // To hide the message after 3 seconds
+          setTimeout(() => {
+            this.showMessage = false;
+          }, 3000);
         })
         .catch((error) => {
           console.error(error);
           this.getAccounts();
         });
     },
+    // Update function
+    updateAccount(payload, accountId) {
+      const path = `http://localhost:5000/accounts/${accountId}`;
+      axios
+        .put(path, payload)
+        .then((response) => {
+          this.getAccounts();
+          // For message alert
+          this.message = "Account Updated succesfully!";
+          // To actually show the message
+          this.showMessage = true;
+          // To hide the message after 3 seconds
+          setTimeout(() => {
+            this.showMessage = false;
+          }, 3000);
+        })
+        .catch((error) => {
+          console.error(error);
+          this.getAccounts();
+        });
+    },
+    // Delete account
+    RESTdeleteAccount(accountId) {
+      const path = `http://localhost:5000/accounts/${accountId}`;
+      axios
+        .delete(path)
+        .then((response) => {
+          this.getAccounts();
+          // For message alert
+          this.message = "Account Deleted succesfully!";
+          // To actually show the message
+          this.showMessage = true;
+          // To hide the message after 3 seconds
+          setTimeout(() => {
+            this.showMessage = false;
+          }, 3000);
+        })
+        .catch((error) => {
+          console.error(error);
+          this.getAccounts();
+        });
+    },
+    // Handle Delete button
+    deleteAccount(account) {
+      this.RESTdeleteAccount(account.id);
+    },
     initForm() {
       this.createAccountForm.name = "";
       this.createAccountForm.currency = "";
+      this.editAccountForm.id = "";
+      this.editAccountForm.name = "";
     },
     onSubmit(e) {
       e.preventDefault(); //prevent default form submit form the browser
@@ -123,6 +198,20 @@ export default {
       };
       this.createAccount(payload);
       this.initForm;
+    },
+    // Handle submit event for edit account
+    onSubmitUpdate(e) {
+      e.preventDefault(); //prevent default form submit form the browser
+      this.$refs.editAccountModal.hide(); //hide the modal when submitted
+      const payload = {
+        name: this.editAccountForm.name,
+      };
+      this.updateAccount(payload, this.editAccountForm.id);
+    },
+    //Prepare edit account form with the name of the account
+    editAccount(account) {
+      this.editAccountForm.name = account.name;
+      this.editAccountForm.id = account.id;
     },
   },
   created() {
