@@ -19,12 +19,12 @@ jobs:
     runs-on: ubuntu-latest
     env:
       ENV: ghci
+      DBHOST: bla
+      DBUSER: bla
+      DBPASS: bla
+      DBNAME: bla
 
     steps:
-
-    - name: "Show environmetn variables"
-      run: |
-        env
     - uses: actions/checkout@v3
     - name: Set up Python 3.10
       uses: actions/setup-python@v3
@@ -44,45 +44,33 @@ jobs:
     - name: Test with pytest
       run: |
         python -m pytest --cov=iebank_api -v
-    # This workflow will install Python dependencies, run tests and lint with a single version of Python
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+    - name: Upload artifact for deployment jobs
+      uses: actions/upload-artifact@v2
+      with:
+        name: python-app
+        path: |
+          . 
 
-name: IEbank Python backned
-
-on:
-  push:
-    branches: [ "main", "dev" ]
-  pull_request:
-    branches: [ "main" ]
-  workflow_dispatch:
-
-permissions:
-  contents: read
-
-jobs:
-  env:
-    ENV: ghci
-  build:
-
+  deploy:
     runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: 'Production'
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
 
     steps:
-    - uses: actions/checkout@v3
-    - name: Set up Python 3.10
-      uses: actions/setup-python@v3
+    - name: Download artifact from build job
+      uses: actions/download-artifact@v2
       with:
-        python-version: "3.10"
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install flake8 pytest
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-    - name: Lint with flake8
-      run: |
-        # stop the build if there are Python syntax errors or undefined names
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-    - name: Test with pytest
-      run: |
-        python -m pytest --cov=iebank_api -v
+        name: python-app
+        path: .
+        
+    - name: 'Deploy to Azure Web App'
+      uses: azure/webapps-deploy@v2
+      id: deploy-to-webapp
+      with:
+        app-name: 'jseijas-iebank-backend'
+        slot-name: 'Production'
+        publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_2C30AEF34D9740FD8BC5D073A8B0CDB0 }}
+
+    
