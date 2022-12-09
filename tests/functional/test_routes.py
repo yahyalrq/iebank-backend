@@ -1,6 +1,5 @@
-from iebank_api import app, db
+from iebank_api import app
 import pytest
-import requests
 
 
 def test_get_accounts(testing_client):
